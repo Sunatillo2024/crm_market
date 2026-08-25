@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}POS | MiniMarket CRM{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <span class="badge text-bg-primary mb-3">
+                {{ user.get_role_display }}
+            </span>
+
+            <h1 class="h3">POS savdo sahifasi</h1>
+
+            <p>
+                Market: <strong>{{ store.name }}</strong>
+            </p>
+
+            <p>
+                Kassir: <strong>{{ user.get_full_name|default:user.username }}</strong>
+            </p>
+
+            <p class="text-secondary">
+                POS interfeysini 6-bosqichda to‘liq yaratamiz.
+            </p>
+
+            {% if user.is_owner %}
+                <a
+                    href="{% url 'stores:dashboard' %}"
+                    class="btn btn-outline-primary"
+                >
+                    Dashboardga qaytish
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

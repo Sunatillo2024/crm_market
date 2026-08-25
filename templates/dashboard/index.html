@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | MiniMarket CRM{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <span class="badge text-bg-success mb-3">
+                Owner
+            </span>
+
+            <h1 class="h3">{{ store.name }}</h1>
+
+            <p class="text-secondary">
+                Dashboard ishlayapti. To‘liq dashboardni
+                keyingi bosqichda yaratamiz.
+            </p>
+
+            <a
+                href="{% url 'sales:pos' %}"
+                class="btn btn-primary"
+            >
+                POS sahifasiga o‘tish
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

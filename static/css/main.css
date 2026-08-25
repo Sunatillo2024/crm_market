@@ -1,0 +1,12 @@
+body {
+    min-height: 100vh;
+}
+
+.auth-card {
+    max-width: 420px;
+    margin-top: 10vh;
+}
+
+.card {
+    border: 0;
+}

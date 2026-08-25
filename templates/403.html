@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Ruxsat yo‘q{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="alert alert-danger">
+        <h1 class="h4">Bu sahifaga kirish mumkin emas</h1>
+        <p class="mb-3">
+            Sizda ushbu sahifani ochish huquqi yo‘q.
+        </p>
+
+        <a
+            href="{% url 'accounts:home' %}"
+            class="btn btn-dark"
+        >
+            Asosiy sahifaga qaytish
+        </a>
+    </div>
+</div>
+{% endblock %}
