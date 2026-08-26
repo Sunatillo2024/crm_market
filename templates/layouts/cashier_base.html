@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block body_class %}
+    cashier-body
+{% endblock %}
+
+{% block content %}
+
+<header class="cashier-header">
+    <div class="cashier-brand">
+        <span class="cashier-brand-icon">
+            <i class="bi bi-shop"></i>
+        </span>
+
+        <div>
+            <div class="cashier-store-name">
+                {{ current_store.name }}
+            </div>
+
+            <div class="cashier-page-label">
+                Savdo terminali
+            </div>
+        </div>
+    </div>
+
+    <div class="cashier-header-right">
+        <div
+            class="cashier-clock d-none d-md-flex"
+            id="pos-clock"
+        ></div>
+
+        <div class="cashier-profile d-none d-sm-flex">
+            <i class="bi bi-person-circle"></i>
+
+            <span>
+                {{ user.get_full_name|default:user.username }}
+            </span>
+        </div>
+
+        {% if user.is_owner %}
+            <a
+                href="{% url 'stores:dashboard' %}"
+                class="btn btn-outline-secondary"
+            >
+                <i class="bi bi-grid-1x2"></i>
+
+                <span class="d-none d-md-inline">
+                    Dashboard
+                </span>
+            </a>
+        {% endif %}
+
+        <form
+            method="post"
+            action="{% url 'accounts:logout' %}"
+        >
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="btn btn-outline-danger"
+            >
+                <i class="bi bi-box-arrow-right"></i>
+
+                <span class="d-none d-md-inline">
+                    Chiqish
+                </span>
+            </button>
+        </form>
+    </div>
+</header>
+
+<main class="cashier-main">
+    {% block cashier_content %}{% endblock %}
+</main>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+    const clockElement = document.getElementById("pos-clock");
+
+    if (clockElement) {
+        const formatter = new Intl.DateTimeFormat("uz-UZ", {
+            timeZone: "Asia/Bishkek",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+
+        const updateClock = () => {
+            clockElement.textContent = formatter.format(new Date());
+        };
+
+        updateClock();
+
+        window.setInterval(updateClock, 1000);
+    }
+</script>
+
+{% endblock %}

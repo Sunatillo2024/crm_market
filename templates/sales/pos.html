@@ -1,38 +1,111 @@
-{% extends "base.html" %}
+{% extends "layouts/cashier_base.html" %}
 
-{% block title %}POS | MiniMarket CRM{% endblock %}
+{% block title %}
+    POS | {{ current_store.name }}
+{% endblock %}
 
-{% block content %}
-<div class="container py-5">
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <span class="badge text-bg-primary mb-3">
-                {{ user.get_role_display }}
-            </span>
+{% block cashier_content %}
 
-            <h1 class="h3">POS savdo sahifasi</h1>
+<div class="row g-4">
+    <div class="col-xl-8">
+        <section class="pos-panel mb-4">
+            <div class="panel-header">
+                <div>
+                    <h1 class="panel-title">
+                        Mahsulot qidirish
+                    </h2>
 
-            <p>
-                Market: <strong>{{ store.name }}</strong>
-            </p>
+                    <p class="panel-subtitle">
+                        Barkodni skanerlang yoki mahsulot nomini yozing
+                    </p>
+                </div>
 
-            <p>
-                Kassir: <strong>{{ user.get_full_name|default:user.username }}</strong>
-            </p>
+                <span class="panel-icon">
+                    <i class="bi bi-upc-scan"></i>
+                </span>
+            </div>
 
-            <p class="text-secondary">
-                POS interfeysini 6-bosqichda to‘liq yaratamiz.
-            </p>
+            <div class="input-group input-group-lg">
+                <span class="input-group-text">
+                    <i class="bi bi-upc"></i>
+                </span>
 
-            {% if user.is_owner %}
-                <a
-                    href="{% url 'stores:dashboard' %}"
-                    class="btn btn-outline-primary"
+                <input
+                    type="text"
+                    class="form-control"
+                    placeholder="Barkod qidirish 6-bosqichda qo‘shiladi"
+                    disabled
                 >
-                    Dashboardga qaytish
-                </a>
-            {% endif %}
-        </div>
+            </div>
+        </section>
+
+        <section class="pos-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        Savat
+                    </h2>
+
+                    <p class="panel-subtitle">
+                        Tanlangan mahsulotlar
+                    </p>
+                </div>
+
+                <span class="panel-icon">
+                    <i class="bi bi-cart3"></i>
+                </span>
+            </div>
+
+            <div class="empty-state">
+                <i class="bi bi-cart-x"></i>
+
+                <h3>
+                    Savat bo‘sh
+                </h3>
+
+                <p>
+                    Mahsulot qo‘shish funksiyasi keyingi bosqichlarda tayyorlanadi.
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <div class="col-xl-4">
+        <section class="pos-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        To‘lov
+                    </h2>
+
+                    <p class="panel-subtitle">
+                        Savdo summasi
+                    </p>
+                </div>
+
+                <span class="panel-icon">
+                    <i class="bi bi-wallet2"></i>
+                </span>
+            </div>
+
+            <div class="pos-total">
+                <span>
+                    Jami
+                </span>
+
+                <strong>
+                    0 som
+                </strong>
+            </div>
+
+            <button
+                class="btn btn-success btn-lg w-100 mt-4"
+                disabled
+            >
+                Savdoni yakunlash
+            </button>
+        </section>
     </div>
 </div>
+
 {% endblock %}

@@ -1,0 +1,300 @@
+{% extends "layouts/owner_base.html" %}
+
+{% block title %}
+    Mahsulotlar | {{ current_store.name }}
+{% endblock %}
+
+{% block page_title %}
+    Mahsulotlar
+{% endblock %}
+
+{% block page_subtitle %}
+    Market mahsulotlari va narxlarini boshqarish
+{% endblock %}
+
+{% block header_actions %}
+    <a
+        href="{% url 'products:create' %}"
+        class="btn btn-primary"
+    >
+        <i class="bi bi-plus-lg me-1"></i>
+        Mahsulot qo‘shish
+    </a>
+{% endblock %}
+
+{% block owner_content %}
+
+<div class="product-summary-grid">
+    <div class="product-summary-card">
+        <span>Faol mahsulotlar</span>
+        <strong>{{ active_count }}</strong>
+    </div>
+
+    <div class="product-summary-card warning">
+        <span>Kam qolganlar</span>
+        <strong>{{ low_stock_count }}</strong>
+    </div>
+
+    <div class="product-summary-card secondary">
+        <span>Arxivlanganlar</span>
+        <strong>{{ archived_count }}</strong>
+    </div>
+</div>
+
+<section class="dashboard-panel mt-4">
+    <form method="get" class="product-filter-form">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-5">
+                <label class="form-label">
+                    Qidirish
+                </label>
+
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+
+                    <input
+                        type="search"
+                        name="search"
+                        value="{{ search }}"
+                        class="form-control"
+                        placeholder="Mahsulot nomi yoki barkod"
+                    >
+                </div>
+            </div>
+
+            <div class="col-lg-3">
+                <label class="form-label">
+                    Holati
+                </label>
+
+                <select
+                    name="status"
+                    class="form-select"
+                >
+                    <option
+                        value="active"
+                        {% if selected_status == "active" %}selected{% endif %}
+                    >
+                        Faol
+                    </option>
+
+                    <option
+                        value="archived"
+                        {% if selected_status == "archived" %}selected{% endif %}
+                    >
+                        Arxivlangan
+                    </option>
+
+                    <option
+                        value="all"
+                        {% if selected_status == "all" %}selected{% endif %}
+                    >
+                        Hammasi
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-lg-2">
+                <div class="form-check product-low-stock-check">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="low_stock"
+                        value="1"
+                        id="lowStock"
+                        {% if low_stock %}checked{% endif %}
+                    >
+
+                    <label
+                        class="form-check-label"
+                        for="lowStock"
+                    >
+                        Kam qolganlar
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-lg-2 d-flex gap-2">
+                <button
+                    class="btn btn-dark flex-grow-1"
+                    type="submit"
+                >
+                    Qidirish
+                </button>
+
+                <a
+                    href="{% url 'products:list' %}"
+                    class="btn btn-outline-secondary"
+                    title="Filtrni tozalash"
+                >
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+</section>
+
+<section class="dashboard-panel mt-4 p-0 overflow-hidden">
+    {% if page_obj.object_list %}
+        <div class="table-responsive">
+            <table class="table product-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Mahsulot</th>
+                        <th>Barkod</th>
+                        <th>Kelish narxi</th>
+                        <th>Sotuv narxi</th>
+                        <th>Qoldiq</th>
+                        <th>Holati</th>
+                        <th class="text-end">Amallar</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for product in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="product-name">
+                                    {{ product.name }}
+                                </div>
+
+                                <div class="product-unit">
+                                    {{ product.get_unit_display }}
+                                </div>
+                            </td>
+
+                            <td>
+                                <code>
+                                    {{ product.barcode|default:"—" }}
+                                </code>
+                            </td>
+
+                            <td>
+                                {{ product.purchase_price|floatformat:2 }}
+                                som
+                            </td>
+
+                            <td class="fw-semibold">
+                                {{ product.sale_price|floatformat:2 }}
+                                som
+                            </td>
+
+                            <td>
+                                <span
+                                    class="{% if product.is_low_stock %}text-danger fw-bold{% endif %}"
+                                >
+                                    {{ product.stock_quantity|floatformat:-3 }}
+                                    {{ product.get_unit_display }}
+                                </span>
+
+                                {% if product.is_low_stock %}
+                                    <div class="low-stock-label">
+                                        Kam qolgan
+                                    </div>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if product.is_active %}
+                                    <span class="status-badge active">
+                                        Faol
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge inactive">
+                                        Arxivlangan
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if product.is_active %}
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a
+                                            href="{% url 'products:edit' product.pk %}"
+                                            class="btn btn-sm btn-outline-primary"
+                                            title="Tahrirlash"
+                                        >
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+
+                                        <form
+                                            method="post"
+                                            action="{% url 'products:archive' product.pk %}"
+                                            onsubmit="return confirm('{{ product.name|escapejs }} mahsulotini arxivlaysizmi?');"
+                                        >
+                                            {% csrf_token %}
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Arxivlash"
+                                            >
+                                                <i class="bi bi-archive"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <div class="text-end text-secondary">
+                                        —
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+            <div class="product-pagination">
+                <span>
+                    {{ page_obj.number }} /
+                    {{ page_obj.paginator.num_pages }} sahifa
+                </span>
+
+                <div class="btn-group">
+                    {% if page_obj.has_previous %}
+                        <a
+                            class="btn btn-sm btn-outline-secondary"
+                            href="?search={{ search|urlencode }}&status={{ selected_status }}&{% if low_stock %}low_stock=1&{% endif %}page={{ page_obj.previous_page_number }}"
+                        >
+                            Oldingi
+                        </a>
+                    {% endif %}
+
+                    {% if page_obj.has_next %}
+                        <a
+                            class="btn btn-sm btn-outline-secondary"
+                            href="?search={{ search|urlencode }}&status={{ selected_status }}&{% if low_stock %}low_stock=1&{% endif %}page={{ page_obj.next_page_number }}"
+                        >
+                            Keyingi
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-box-seam"></i>
+
+            <h3>
+                Mahsulot topilmadi
+            </h3>
+
+            <p>
+                Filtrni o‘zgartiring yoki yangi mahsulot qo‘shing.
+            </p>
+
+            <a
+                href="{% url 'products:create' %}"
+                class="btn btn-primary"
+            >
+                Mahsulot qo‘shish
+            </a>
+        </div>
+    {% endif %}
+</section>
+
+{% endblock %}

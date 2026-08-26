@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block body_class %}
+    owner-body
+{% endblock %}
+
+{% block content %}
+
+<aside class="owner-sidebar d-none d-lg-block">
+    {% include "includes/owner_sidebar.html" %}
+</aside>
+
+<div
+    class="offcanvas offcanvas-start owner-mobile-sidebar"
+    tabindex="-1"
+    id="ownerMobileMenu"
+>
+    <div class="offcanvas-body p-0">
+        {% include "includes/owner_sidebar.html" %}
+    </div>
+</div>
+
+<div class="owner-main">
+    <header class="owner-header">
+        <div class="d-flex align-items-center gap-3">
+            <button
+                class="btn btn-light d-lg-none"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#ownerMobileMenu"
+            >
+                <i class="bi bi-list fs-5"></i>
+            </button>
+
+            <div>
+                <h1 class="page-title">
+                    {% block page_title %}
+                        Dashboard
+                    {% endblock %}
+                </h1>
+
+                <div class="page-subtitle">
+                    {% block page_subtitle %}
+                        Market boshqaruvi
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+
+        <div class="owner-header-actions">
+            {% block header_actions %}{% endblock %}
+        </div>
+    </header>
+
+    {% if messages %}
+        <div class="owner-messages">
+            {% for message in messages %}
+                <div
+                    class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                    role="alert"
+                >
+                    {{ message }}
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                    ></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <section class="owner-page-content">
+        {% block owner_content %}{% endblock %}
+    </section>
+</div>
+
+{% endblock %}

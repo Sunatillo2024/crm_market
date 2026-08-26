@@ -1,29 +1,299 @@
-{% extends "base.html" %}
+{% extends "layouts/owner_base.html" %}
 
-{% block title %}Dashboard | MiniMarket CRM{% endblock %}
+{% block title %}
+    Dashboard | {{ current_store.name }}
+{% endblock %}
 
-{% block content %}
-<div class="container py-5">
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <span class="badge text-bg-success mb-3">
-                Owner
-            </span>
+{% block page_title %}
+    Dashboard
+{% endblock %}
 
-            <h1 class="h3">{{ store.name }}</h1>
+{% block page_subtitle %}
+    {{ today|date:"d.m.Y" }} · {{ current_store.name }}
+{% endblock %}
 
-            <p class="text-secondary">
-                Dashboard ishlayapti. To‘liq dashboardni
-                keyingi bosqichda yaratamiz.
-            </p>
+{% block header_actions %}
+    <a
+        href="{% url 'sales:pos' %}"
+        class="btn btn-primary"
+    >
+        <i class="bi bi-plus-lg me-1"></i>
+        Yangi savdo
+    </a>
+{% endblock %}
 
-            <a
-                href="{% url 'sales:pos' %}"
-                class="btn btn-primary"
-            >
-                POS sahifasiga o‘tish
-            </a>
-        </div>
+{% block owner_content %}
+
+<div class="metrics-grid">
+    {% for card in metric_cards %}
+        <article class="metric-card">
+            <div class="metric-card-top">
+                <span class="metric-title">
+                    {{ card.title }}
+                </span>
+
+                <span class="metric-icon {{ card.color }}">
+                    <i class="bi {{ card.icon }}"></i>
+                </span>
+            </div>
+
+            <div class="metric-value">
+                {{ card.value|floatformat:0 }}
+
+                <span>
+                    {{ card.suffix }}
+                </span>
+            </div>
+        </article>
+    {% endfor %}
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-xl-8">
+        <section class="dashboard-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        Oxirgi savdolar
+                    </h2>
+
+                    <p class="panel-subtitle">
+                        Bugungi oxirgi operatsiyalar
+                    </p>
+                </div>
+
+                <span class="panel-icon">
+                    <i class="bi bi-receipt"></i>
+                </span>
+            </div>
+
+            {% if recent_sales %}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Vaqt</th>
+                                <th>Kassir</th>
+                                <th>To‘lov</th>
+                                <th class="text-end">
+                                    Summa
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for sale in recent_sales %}
+                                <tr>
+                                    <td>
+                                        {{ sale.created_at|date:"H:i" }}
+                                    </td>
+
+                                    <td>
+                                        {{ sale.cashier }}
+                                    </td>
+
+                                    <td>
+                                        {{ sale.get_payment_method_display }}
+                                    </td>
+
+                                    <td class="text-end fw-semibold">
+                                        {{ sale.total_amount }} som
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-receipt-cutoff"></i>
+
+                    <h3>
+                        Savdolar hali mavjud emas
+                    </h3>
+
+                    <p>
+                        Yangi savdolar amalga oshirilganda shu yerda ko‘rinadi.
+                    </p>
+
+                    <a
+                        href="{% url 'sales:pos' %}"
+                        class="btn btn-outline-primary"
+                    >
+                        POS sahifasini ochish
+                    </a>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+
+    <div class="col-xl-4">
+        <section class="dashboard-panel h-100">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        To‘lovlar
+                    </h2>
+
+                    <p class="panel-subtitle">
+                        Bugungi tushum turlari
+                    </p>
+                </div>
+
+                <span class="panel-icon">
+                    <i class="bi bi-credit-card"></i>
+                </span>
+            </div>
+
+            <div class="payment-summary">
+                <div class="payment-summary-item">
+                    <span class="payment-method">
+                        <i class="bi bi-cash-stack text-success"></i>
+
+                        Naqd
+                    </span>
+
+                    <strong>
+                        {{ payment_summary.cash|floatformat:0 }} som
+                    </strong>
+                </div>
+
+                <div class="payment-summary-item">
+                    <span class="payment-method">
+                        <i class="bi bi-phone text-primary"></i>
+
+                        O‘tkazma
+                    </span>
+
+                    <strong>
+                        {{ payment_summary.transfer|floatformat:0 }} som
+                    </strong>
+                </div>
+            </div>
+        </section>
     </div>
 </div>
+
+<div class="row g-4 mt-1">
+    <div class="col-xl-7">
+        <section class="dashboard-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        Market kassirlari
+                    </h2>
+
+                    <p class="panel-subtitle">
+                        Faol kassirlar:
+                        {{ active_cashier_count }}/{{ cashier_count }}
+                    </p>
+                </div>
+
+                <span class="panel-icon">
+                    <i class="bi bi-people"></i>
+                </span>
+            </div>
+
+            {% if cashiers %}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Ism</th>
+                                <th>Login</th>
+                                <th>Holat</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for cashier in cashiers %}
+                                <tr>
+                                    <td>
+                                        {{ cashier.get_full_name|default:cashier.username }}
+                                    </td>
+
+                                    <td>
+                                        @{{ cashier.username }}
+                                    </td>
+
+                                    <td>
+                                        {% if cashier.is_active %}
+                                            <span class="status-badge active">
+                                                Faol
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge inactive">
+                                                Bloklangan
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-person-plus"></i>
+
+                    <h3>
+                        Kassirlar yo‘q
+                    </h3>
+
+                    <p>
+                        Hozircha marketga kassir biriktirilmagan.
+                    </p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+
+    <div class="col-xl-5">
+        <section class="dashboard-panel h-100">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        Kam qolgan mahsulotlar
+                    </h2>
+
+                    <p class="panel-subtitle">
+                        Omborda tugayotgan mahsulotlar
+                    </p>
+                </div>
+
+                <span class="panel-icon">
+                    <i class="bi bi-exclamation-circle"></i>
+                </span>
+            </div>
+
+            {% if low_stock_products %}
+                {% for product in low_stock_products %}
+                    <div class="payment-summary-item">
+                        <span>
+                            {{ product.name }}
+                        </span>
+
+                        <strong class="text-danger">
+                            {{ product.stock_quantity|floatformat:-3 }}
+                            {{ product.get_unit_display }}
+                        </strong>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-box-seam"></i>
+
+                    <h3>
+                        Ma’lumot yo‘q
+                    </h3>
+
+                    <p>
+                        Mahsulotlar qo‘shilgach, kam qolganlari shu yerda chiqadi.
+                    </p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+
 {% endblock %}

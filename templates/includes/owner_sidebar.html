@@ -1,0 +1,167 @@
+<div class="sidebar-content">
+    <div class="sidebar-brand">
+        <div class="brand-icon">
+            <i class="bi bi-shop"></i>
+        </div>
+
+        <div>
+            <div class="brand-title">
+                MiniMarket
+            </div>
+
+            <div class="brand-subtitle">
+                CRM tizimi
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-store">
+        <div class="store-icon">
+            <i class="bi bi-building"></i>
+        </div>
+
+        <div class="overflow-hidden">
+            <div class="store-label">
+                Joriy market
+            </div>
+
+            <div class="store-name text-truncate">
+                {{ current_store.name|default:"Market" }}
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-section-title">
+        ASOSIY MENYU
+    </div>
+
+    <nav class="sidebar-navigation">
+        <a
+            href="{% url 'stores:dashboard' %}"
+            class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+        >
+            <i class="bi bi-grid-1x2"></i>
+
+            <span>
+                Dashboard
+            </span>
+        </a>
+
+        <a
+            href="{% url 'sales:pos' %}"
+            class="sidebar-link {% if request.resolver_match.url_name == 'pos' %}active{% endif %}"
+        >
+            <i class="bi bi-cart3"></i>
+
+            <span>
+                Savdo / POS
+            </span>
+        </a>
+
+        <a
+            href="{% url 'products:list' %}"
+            class="sidebar-link {% if request.resolver_match.namespace == 'products' %}active{% endif %}"
+        >
+            <i class="bi bi-box-seam"></i>
+
+            <span>
+                Mahsulotlar
+            </span>
+        </a>
+
+        <a
+            href="{% url 'inventory:list' %}"
+            class="sidebar-link {% if request.resolver_match.namespace == 'inventory' %}active{% endif %}"
+        >
+            <i class="bi bi-boxes"></i>
+
+            <span>
+                Ombor
+            </span>
+        </a>
+
+        <span class="sidebar-link sidebar-link-disabled">
+            <i class="bi bi-receipt"></i>
+
+            <span>
+                Savdolar
+            </span>
+
+            <span class="coming-soon">
+                Tez orada
+            </span>
+        </span>
+
+        <span class="sidebar-link sidebar-link-disabled">
+            <i class="bi bi-bar-chart"></i>
+
+            <span>
+                Hisobotlar
+            </span>
+
+            <span class="coming-soon">
+                Tez orada
+            </span>
+        </span>
+
+        <span class="sidebar-link sidebar-link-disabled">
+            <i class="bi bi-people"></i>
+
+            <span>
+                Xodimlar
+            </span>
+
+            <span class="coming-soon">
+                Tez orada
+            </span>
+        </span>
+
+        <span class="sidebar-link sidebar-link-disabled">
+            <i class="bi bi-gear"></i>
+
+            <span>
+                Sozlamalar
+            </span>
+
+            <span class="coming-soon">
+                Tez orada
+            </span>
+        </span>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="user-avatar">
+                {{ user.username|first|upper }}
+            </div>
+
+            <div class="overflow-hidden">
+                <div class="user-name text-truncate">
+                    {{ user.get_full_name|default:user.username }}
+                </div>
+
+                <div class="user-role">
+                    Market egasi
+                </div>
+            </div>
+        </div>
+
+        <form
+            method="post"
+            action="{% url 'accounts:logout' %}"
+        >
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="sidebar-logout"
+            >
+                <i class="bi bi-box-arrow-right"></i>
+
+                <span>
+                    Chiqish
+                </span>
+            </button>
+        </form>
+    </div>
+</div>

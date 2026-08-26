@@ -1,0 +1,279 @@
+{% extends "layouts/owner_base.html" %}
+
+{% block title %}
+    Ombor harakati | {{ current_store.name }}
+{% endblock %}
+
+{% block page_title %}
+    Ombor harakati
+{% endblock %}
+
+{% block page_subtitle %}
+    Mahsulot qoldig‘ini o‘zgartirish
+{% endblock %}
+
+{% block header_actions %}
+    <a
+        href="{% url 'inventory:list' %}"
+        class="btn btn-outline-secondary"
+    >
+        <i class="bi bi-arrow-left me-1"></i>
+        Ortga
+    </a>
+{% endblock %}
+
+{% block owner_content %}
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <section class="product-form-panel">
+            <form
+                method="post"
+                novalidate
+            >
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            <div>
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row g-4">
+                    <div class="col-12">
+                        <label
+                            for="{{ form.product.id_for_label }}"
+                            class="form-label"
+                        >
+                            Mahsulot
+                        </label>
+
+                        {{ form.product }}
+
+                        {% for error in form.product.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label
+                            for="{{ form.movement_type.id_for_label }}"
+                            class="form-label"
+                        >
+                            Harakat turi
+                        </label>
+
+                        {{ form.movement_type }}
+
+                        {% for error in form.movement_type.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label
+                            id="movementQuantityLabel"
+                            for="{{ form.quantity.id_for_label }}"
+                            class="form-label"
+                        >
+                            Miqdor
+                        </label>
+
+                        {{ form.quantity }}
+
+                        <div
+                            id="movementQuantityHelp"
+                            class="form-text"
+                        >
+                            Qoldiqqa qo‘shiladigan yoki undan ayriladigan miqdorni kiriting.
+                        </div>
+
+                        {% for error in form.quantity.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-12">
+                        <label
+                            for="{{ form.note.id_for_label }}"
+                            class="form-label"
+                        >
+                            Izoh
+                        </label>
+
+                        {{ form.note }}
+
+                        {% for error in form.note.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="product-form-actions">
+                    <a
+                        href="{% url 'inventory:list' %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Bekor qilish
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        <i class="bi bi-check-lg me-1"></i>
+                        Saqlash
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="col-xl-4">
+        <section class="dashboard-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        Harakat turlari
+                    </h2>
+
+                    <p class="panel-subtitle">
+                        Qoldiq qanday o‘zgaradi
+                    </p>
+                </div>
+
+                <span class="panel-icon">
+                    <i class="bi bi-info-circle"></i>
+                </span>
+            </div>
+
+            <div class="inventory-help-list">
+                <div class="inventory-help-item">
+                    <strong>
+                        Kirim
+                    </strong>
+
+                    <p>
+                        Mavjud qoldiqqa yangi mahsulot miqdori qo‘shiladi.
+                    </p>
+
+                    <span>
+                        10 + 5 = 15
+                    </span>
+                </div>
+
+                <div class="inventory-help-item">
+                    <strong>
+                        Chiqim
+                    </strong>
+
+                    <p>
+                        Mavjud qoldiqdan kiritilgan miqdor ayriladi.
+                    </p>
+
+                    <span>
+                        10 - 3 = 7
+                    </span>
+                </div>
+
+                <div class="inventory-help-item">
+                    <strong>
+                        To‘g‘rilash
+                    </strong>
+
+                    <p>
+                        Kiritilgan son yangi haqiqiy qoldiq sifatida saqlanadi.
+                    </p>
+
+                    <span>
+                        Oldin: 10 → yangi: 6
+                    </span>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const movementTypeInput = document.getElementById(
+            "id_movement_type"
+        );
+
+        const quantityInput = document.getElementById(
+            "id_quantity"
+        );
+
+        const quantityLabel = document.getElementById(
+            "movementQuantityLabel"
+        );
+
+        const quantityHelp = document.getElementById(
+            "movementQuantityHelp"
+        );
+
+        if (
+            !movementTypeInput ||
+            !quantityInput ||
+            !quantityLabel ||
+            !quantityHelp
+        ) {
+            return;
+        }
+
+        function updateQuantityDescription() {
+            if (movementTypeInput.value === "adjustment") {
+                quantityLabel.textContent = "Yangi haqiqiy qoldiq";
+
+                quantityHelp.textContent = (
+                    "Mahsulotning yangi umumiy qoldig‘ini kiriting. 0 kiritish mumkin."
+                );
+
+                quantityInput.min = "0";
+
+                return;
+            }
+
+            if (movementTypeInput.value === "out") {
+                quantityLabel.textContent = "Chiqim miqdori";
+
+                quantityHelp.textContent = (
+                    "Mavjud qoldiqdan ayriladigan miqdorni kiriting."
+                );
+
+                quantityInput.min = "0.001";
+
+                return;
+            }
+
+            quantityLabel.textContent = "Kirim miqdori";
+
+            quantityHelp.textContent = (
+                "Mavjud qoldiqqa qo‘shiladigan miqdorni kiriting."
+            );
+
+            quantityInput.min = "0.001";
+        }
+
+        movementTypeInput.addEventListener(
+            "change",
+            updateQuantityDescription
+        );
+
+        updateQuantityDescription();
+    })();
+</script>
+
+{% endblock %}

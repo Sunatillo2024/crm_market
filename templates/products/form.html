@@ -1,0 +1,35 @@
+{% extends "layouts/owner_base.html" %}
+
+{% block title %}
+    {{ page_title }} | {{ current_store.name }}
+{% endblock %}
+
+{% block page_title %}
+    {{ page_title }}
+{% endblock %}
+
+{% block page_subtitle %}
+    Mahsulot ma’lumotlarini kiriting
+{% endblock %}
+
+{% block header_actions %}
+    <a
+        href="{% url 'products:list' %}"
+        class="btn btn-outline-secondary"
+    >
+        <i class="bi bi-arrow-left me-1"></i>
+        Ortga
+    </a>
+{% endblock %}
+
+{% block owner_content %}
+
+<section class="product-form-panel">
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% include "products/partials/product_form.html" %}
+    </form>
+</section>
+
+{% endblock %}

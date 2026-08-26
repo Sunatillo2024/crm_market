@@ -1,0 +1,425 @@
+{% extends "layouts/owner_base.html" %}
+
+{% block title %}
+    Ombor | {{ current_store.name }}
+{% endblock %}
+
+{% block page_title %}
+    Ombor
+{% endblock %}
+
+{% block page_subtitle %}
+    Mahsulot qoldiqlari va ombor harakatlari
+{% endblock %}
+
+{% block header_actions %}
+    <div class="d-flex gap-2">
+        <a
+            href="{% url 'inventory:history' %}"
+            class="btn btn-outline-secondary"
+        >
+            <i class="bi bi-clock-history me-1"></i>
+            Tarix
+        </a>
+
+        <a
+            href="{% url 'inventory:movement_create' %}"
+            class="btn btn-primary"
+        >
+            <i class="bi bi-plus-lg me-1"></i>
+            Harakat qo‘shish
+        </a>
+    </div>
+{% endblock %}
+
+{% block owner_content %}
+
+<div class="inventory-summary-grid">
+    <div class="inventory-summary-card">
+        <span>Faol mahsulotlar</span>
+
+        <strong>
+            {{ active_products_count }}
+        </strong>
+    </div>
+
+    <div class="inventory-summary-card warning">
+        <span>Kam qolganlar</span>
+
+        <strong>
+            {{ low_stock_count }}
+        </strong>
+    </div>
+
+    <div class="inventory-summary-card danger">
+        <span>Tugagan mahsulotlar</span>
+
+        <strong>
+            {{ out_of_stock_count }}
+        </strong>
+    </div>
+
+    <div class="inventory-summary-card success">
+        <span>Ombor qiymati</span>
+
+        <strong>
+            {{ inventory_value|floatformat:2 }}
+            <small>som</small>
+        </strong>
+    </div>
+</div>
+
+<section class="dashboard-panel mt-4">
+    <form method="get" class="product-filter-form">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-6">
+                <label
+                    for="inventorySearch"
+                    class="form-label"
+                >
+                    Mahsulot qidirish
+                </label>
+
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+
+                    <input
+                        id="inventorySearch"
+                        type="search"
+                        name="search"
+                        value="{{ search }}"
+                        class="form-control"
+                        placeholder="Mahsulot nomi yoki barkod"
+                    >
+                </div>
+            </div>
+
+            <div class="col-lg-3">
+                <label
+                    for="inventoryStockStatus"
+                    class="form-label"
+                >
+                    Qoldiq holati
+                </label>
+
+                <select
+                    id="inventoryStockStatus"
+                    name="stock"
+                    class="form-select"
+                >
+                    <option
+                        value="all"
+                        {% if selected_stock_status == "all" %}selected{% endif %}
+                    >
+                        Barcha mahsulotlar
+                    </option>
+
+                    <option
+                        value="low"
+                        {% if selected_stock_status == "low" %}selected{% endif %}
+                    >
+                        Kam qolganlar
+                    </option>
+
+                    <option
+                        value="out"
+                        {% if selected_stock_status == "out" %}selected{% endif %}
+                    >
+                        Tugaganlar
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-lg-3 d-flex gap-2">
+                <button
+                    type="submit"
+                    class="btn btn-dark flex-grow-1"
+                >
+                    Qidirish
+                </button>
+
+                <a
+                    href="{% url 'inventory:list' %}"
+                    class="btn btn-outline-secondary"
+                    title="Filtrni tozalash"
+                >
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+</section>
+
+<section class="dashboard-panel mt-4 p-0 overflow-hidden">
+    {% if page_obj.object_list %}
+        <div class="table-responsive">
+            <table class="table product-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Mahsulot</th>
+                        <th>Barkod</th>
+                        <th>Kelish narxi</th>
+                        <th>Qoldiq</th>
+                        <th>Minimal chegara</th>
+                        <th>Holati</th>
+                        <th class="text-end">Amallar</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for product in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="product-name">
+                                    {{ product.name }}
+                                </div>
+
+                                <div class="product-unit">
+                                    {{ product.get_unit_display }}
+                                </div>
+                            </td>
+
+                            <td>
+                                <code>
+                                    {{ product.barcode|default:"—" }}
+                                </code>
+                            </td>
+
+                            <td>
+                                {{ product.purchase_price|floatformat:2 }}
+                                som
+                            </td>
+
+                            <td>
+                                <strong
+                                    class="{% if product.is_low_stock %}text-danger{% endif %}"
+                                >
+                                    {{ product.stock_quantity|floatformat:-3 }}
+                                    {{ product.get_unit_display }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ product.low_stock_threshold|floatformat:-3 }}
+                                {{ product.get_unit_display }}
+                            </td>
+
+                            <td>
+                                {% if product.stock_quantity == 0 %}
+                                    <span class="inventory-status danger">
+                                        Tugagan
+                                    </span>
+
+                                {% elif product.is_low_stock %}
+                                    <span class="inventory-status warning">
+                                        Kam qolgan
+                                    </span>
+
+                                {% else %}
+                                    <span class="inventory-status success">
+                                        Yetarli
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <div class="inventory-actions">
+                                    <a
+                                        href="{% url 'inventory:movement_create' %}?product={{ product.pk }}&amp;type=in"
+                                        class="btn btn-sm btn-outline-success"
+                                        title="Kirim qilish"
+                                    >
+                                        <i class="bi bi-plus-lg"></i>
+                                    </a>
+
+                                    <a
+                                        href="{% url 'inventory:movement_create' %}?product={{ product.pk }}&amp;type=out"
+                                        class="btn btn-sm btn-outline-danger"
+                                        title="Chiqim qilish"
+                                    >
+                                        <i class="bi bi-dash-lg"></i>
+                                    </a>
+
+                                    <a
+                                        href="{% url 'inventory:movement_create' %}?product={{ product.pk }}&amp;type=adjustment"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        title="Qoldiqni to‘g‘rilash"
+                                    >
+                                        <i class="bi bi-sliders"></i>
+                                    </a>
+
+                                    <a
+                                        href="{% url 'inventory:history' %}?product={{ product.pk }}"
+                                        class="btn btn-sm btn-outline-primary"
+                                        title="Mahsulot tarixi"
+                                    >
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+            <div class="product-pagination">
+                <span>
+                    {{ page_obj.number }} /
+                    {{ page_obj.paginator.num_pages }}
+                    sahifa
+                </span>
+
+                <div class="btn-group">
+                    {% if page_obj.has_previous %}
+                        <a
+                            class="btn btn-sm btn-outline-secondary"
+                            href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}"
+                        >
+                            Oldingi
+                        </a>
+                    {% endif %}
+
+                    {% if page_obj.has_next %}
+                        <a
+                            class="btn btn-sm btn-outline-secondary"
+                            href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}"
+                        >
+                            Keyingi
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-boxes"></i>
+
+            <h3>
+                Mahsulot topilmadi
+            </h3>
+
+            <p>
+                Filtrni o‘zgartiring yoki yangi mahsulot qo‘shing.
+            </p>
+
+            <a
+                href="{% url 'products:create' %}"
+                class="btn btn-primary"
+            >
+                Mahsulot qo‘shish
+            </a>
+        </div>
+    {% endif %}
+</section>
+
+<section class="dashboard-panel mt-4">
+    <div class="panel-header">
+        <div>
+            <h2 class="panel-title">
+                Oxirgi ombor harakatlari
+            </h2>
+
+            <p class="panel-subtitle">
+                So‘nggi kirimlar, chiqimlar va qoldiq o‘zgarishlari
+            </p>
+        </div>
+
+        <a
+            href="{% url 'inventory:history' %}"
+            class="btn btn-sm btn-outline-secondary"
+        >
+            Barcha tarix
+        </a>
+    </div>
+
+    {% if recent_movements %}
+        <div class="table-responsive">
+            <table class="table inventory-history-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Vaqt</th>
+                        <th>Mahsulot</th>
+                        <th>Harakat turi</th>
+                        <th>O‘zgarish</th>
+                        <th>Yangi qoldiq</th>
+                        <th>Foydalanuvchi</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for movement in recent_movements %}
+                        <tr>
+                            <td>
+                                {{ movement.created_at|date:"d.m.Y H:i" }}
+                            </td>
+
+                            <td>
+                                {{ movement.product.name }}
+                            </td>
+
+                            <td>
+                                <span
+                                    class="inventory-movement-badge {{ movement.movement_type }}"
+                                >
+                                    {{ movement.get_movement_type_display }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <strong
+                                    class="{% if movement.is_increase %}text-success{% else %}text-danger{% endif %}"
+                                >
+                                    {% if movement.is_increase %}
+                                        +
+                                    {% else %}
+                                        -
+                                    {% endif %}
+
+                                    {{ movement.quantity|floatformat:-3 }}
+                                </strong>
+
+                                {{ movement.product.get_unit_display }}
+                            </td>
+
+                            <td>
+                                {{ movement.quantity_after|floatformat:-3 }}
+                                {{ movement.product.get_unit_display }}
+                            </td>
+
+                            <td>
+                                {{ movement.created_by|default:"Tizim" }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-arrow-left-right"></i>
+
+            <h3>
+                Ombor harakatlari mavjud emas
+            </h3>
+
+            <p>
+                Birinchi kirim yoki chiqimdan keyin tarix shu yerda ko‘rinadi.
+            </p>
+
+            <a
+                href="{% url 'inventory:movement_create' %}"
+                class="btn btn-primary"
+            >
+                Harakat qo‘shish
+            </a>
+        </div>
+    {% endif %}
+</section>
+
+{% endblock %}
