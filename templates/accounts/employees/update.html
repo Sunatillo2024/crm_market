@@ -1,0 +1,85 @@
+{% extends "layouts/owner_base.html" %}
+
+{% block title %}
+    Kassirni tahrirlash | {{ current_store.name }}
+{% endblock %}
+
+{% block page_title %}
+    Kassirni tahrirlash
+{% endblock %}
+
+{% block page_subtitle %}
+    {{ cashier }}
+{% endblock %}
+
+{% block header_actions %}
+    <a
+        href="{% url 'employees:list' %}"
+        class="btn btn-outline-secondary"
+    >
+        <i class="bi bi-arrow-left me-1"></i>
+        Ortga
+    </a>
+{% endblock %}
+
+{% block owner_content %}
+
+<section class="dashboard-panel employee-form-panel">
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="employee-form-grid">
+            {% for field in form %}
+                <div>
+                    <label
+                        for="{{ field.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ field.label }}
+                    </label>
+
+                    {{ field }}
+
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="employee-form-note">
+            <i class="bi bi-info-circle"></i>
+
+            <span>
+                Login o‘zgartirilsa, kassir keyingi safar yangi login orqali kiradi.
+            </span>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <a
+                href="{% url 'employees:list' %}"
+                class="btn btn-outline-secondary"
+            >
+                Bekor qilish
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                <i class="bi bi-check-circle me-1"></i>
+                Saqlash
+            </button>
+        </div>
+    </form>
+</section>
+
+{% endblock %}

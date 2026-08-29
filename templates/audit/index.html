@@ -1,0 +1,126 @@
+{% extends "layouts/owner_base.html" %}
+
+{% block title %}
+    Faoliyat tarixi | {{ current_store.name }}
+{% endblock %}
+
+{% block page_title %}
+    Faoliyat tarixi
+{% endblock %}
+
+{% block page_subtitle %}
+    Tizimdagi muhim harakatlar jurnali
+{% endblock %}
+
+{% block owner_content %}
+<div class="dashboard-panel mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Qidiruv</label>
+            <input
+                type="text"
+                name="search"
+                class="form-control"
+                placeholder="Tavsif, foydalanuvchi yoki savdo N#"
+                value="{{ search }}"
+            >
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Harakat turi</label>
+            <select name="action" class="form-select">
+                <option value="all">Barchasi</option>
+                {% for value, label in action_choices %}
+                    <option value="{{ value }}" {% if selected_action == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Dan</label>
+            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Gacha</label>
+            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+        </div>
+
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="dashboard-panel">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Vaqt</th>
+                    <th>Harakat</th>
+                    <th>Bajardi</th>
+                    <th>Tavsif</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in page_obj %}
+                    <tr>
+                        <td class="text-nowrap">
+                            <i class="bi bi-calendar3 me-1 text-muted"></i>
+                            {{ log.created_at|date:"d.m.Y H:i" }}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">
+                                {{ log.get_action_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if log.actor %}
+                                {{ log.actor.get_full_name|default:log.actor.username }}
+                            {% else %}
+                                <span class="text-muted">Tizim</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.description }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">
+                            Harakatlar jurnali bo‘sh.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+        <div class="d-flex justify-content-center mt-4">
+            <nav>
+                <ul class="pagination mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ page_query }}">Orqaga</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ page_query }}">Keyingi</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

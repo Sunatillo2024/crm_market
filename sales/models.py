@@ -384,3 +384,22 @@ class SaleItem(models.Model):
         )
 
 
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cancelled_sales",
+        verbose_name="Bekor qilgan foydalanuvchi",
+    )
+
+    cancelled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Bekor qilingan vaqt",
+    )
+
+    cancellation_reason = models.TextField(
+        blank=True,
+        verbose_name="Bekor qilish sababi",
+    )

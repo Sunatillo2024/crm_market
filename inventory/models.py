@@ -14,6 +14,7 @@ class StockMovement(models.Model):
         OUT = "out", "Chiqim"
         SALE = "sale", "Savdo"
         ADJUSTMENT = "adjustment", "Qoldiqni to‘g‘rilash"
+        SALE_CANCEL = "sale_cancel", "Savdo bekori"
 
     store = models.ForeignKey(
         "stores.Store",
@@ -180,7 +181,10 @@ class StockMovement(models.Model):
                         "Boshlang‘ich qoldiq miqdorga teng bo‘lishi kerak."
                     )
 
-            elif self.movement_type == self.MovementType.IN:
+            elif self.movement_type in {
+                self.MovementType.IN,
+                self.MovementType.SALE_CANCEL,
+            }:
                 expected_quantity = (
                     self.quantity_before
                     + self.quantity

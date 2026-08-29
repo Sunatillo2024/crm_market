@@ -1,0 +1,325 @@
+{% extends "layouts/cashier_base.html" %}
+{% load static %}
+
+{% block title %}
+    Kassa | {{ request.user.store.name }}
+{% endblock %}
+
+{% block cashier_content %}
+
+<div
+    id="posApp"
+    class="pos-app"
+    data-product-search-url="{% url 'sales:product_search' %}"
+    data-checkout-url="{% url 'sales:checkout' %}"
+>
+    <form class="d-none">
+        {% csrf_token %}
+    </form>
+
+    <div class="pos-workspace">
+        <section class="pos-surface pos-catalog">
+            <div class="pos-section-header">
+                <div>
+                    <h1>Mahsulotlar</h1>
+
+                    <p>
+                        Nom yoki barkod orqali qidiring
+                    </p>
+                </div>
+
+                <span class="pos-section-icon">
+                    <i class="bi bi-upc-scan"></i>
+                </span>
+            </div>
+
+            <div class="pos-search-box">
+                <i class="bi bi-search"></i>
+
+                <input
+                    id="productSearchInput"
+                    type="search"
+                    autocomplete="off"
+                    autofocus
+                    placeholder="Mahsulot nomi yoki barkodni kiriting"
+                >
+
+                <span class="pos-search-enter">
+                    Enter
+                </span>
+            </div>
+
+            <div
+                id="productSearchStatus"
+                class="pos-search-status"
+                hidden
+            >
+                <span class="spinner-border spinner-border-sm"></span>
+                Qidirilmoqda...
+            </div>
+
+            <div
+                id="productResults"
+                class="pos-product-grid"
+            ></div>
+        </section>
+
+        <div class="pos-checkout-column">
+            <section class="pos-surface pos-cart">
+                <div class="pos-section-header">
+                    <div>
+                        <h2>Savat</h2>
+
+                        <p>Tanlangan mahsulotlar</p>
+                    </div>
+
+                    <span
+                        id="cartCount"
+                        class="pos-cart-count"
+                    >
+                        0 xil
+                    </span>
+                </div>
+
+                <div
+                    id="emptyCart"
+                    class="pos-empty-cart"
+                >
+                    <i class="bi bi-cart-x"></i>
+
+                    <strong>
+                        Savat bo‘sh
+                    </strong>
+
+                    <p>
+                        Chap tomondan mahsulot tanlang yoki barkod kiriting.
+                    </p>
+                </div>
+
+                <div
+                    id="cartItems"
+                    class="pos-cart-items"
+                    hidden
+                ></div>
+            </section>
+
+            <section class="pos-surface pos-payment">
+                <div class="pos-section-header">
+                    <div>
+                        <h2>To‘lov</h2>
+
+                        <p>Savdoni yakunlash</p>
+                    </div>
+
+                    <span class="pos-section-icon">
+                        <i class="bi bi-wallet2"></i>
+                    </span>
+                </div>
+
+                <div class="pos-payment-methods">
+                    <label class="pos-payment-method">
+                        <input
+                            type="radio"
+                            name="payment_method"
+                            value="cash"
+                            checked
+                        >
+
+                        <span>
+                            <i class="bi bi-cash-stack"></i>
+
+                            <strong>Naqd pul</strong>
+                        </span>
+                    </label>
+
+                    <label class="pos-payment-method">
+                        <input
+                            type="radio"
+                            name="payment_method"
+                            value="card"
+                        >
+
+                        <span>
+                            <i class="bi bi-credit-card"></i>
+
+                            <strong>Karta</strong>
+                        </span>
+                    </label>
+                </div>
+
+                <div id="cashPaymentFields">
+                    <label
+                        for="amountReceivedInput"
+                        class="pos-field-label"
+                    >
+                        Mijoz bergan summa
+                    </label>
+
+                    <div class="pos-money-input">
+                        <input
+                            id="amountReceivedInput"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            inputmode="decimal"
+                            placeholder="0"
+                        >
+
+                        <span>som</span>
+                    </div>
+
+                    <div class="pos-quick-money">
+                        <button
+                            type="button"
+                            id="exactCashButton"
+                            class="pos-quick-money-button exact"
+                        >
+                            To‘liq
+                        </button>
+
+                        <button
+                            type="button"
+                            class="pos-quick-money-button"
+                            data-cash-value="100"
+                        >
+                            100
+                        </button>
+
+                        <button
+                            type="button"
+                            class="pos-quick-money-button"
+                            data-cash-value="500"
+                        >
+                            500
+                        </button>
+
+                        <button
+                            type="button"
+                            class="pos-quick-money-button"
+                            data-cash-value="1000"
+                        >
+                            1 000
+                        </button>
+
+                        <button
+                            type="button"
+                            class="pos-quick-money-button"
+                            data-cash-value="2000"
+                        >
+                            2 000
+                        </button>
+
+                        <button
+                            type="button"
+                            class="pos-quick-money-button"
+                            data-cash-value="5000"
+                        >
+                            5 000
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pos-payment-summary">
+                    <div>
+                        <span>Jami</span>
+
+                        <strong id="paymentTotal">
+                            0.00 som
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span id="changeLabel">
+                            Qaytim
+                        </span>
+
+                        <strong
+                            id="changeAmount"
+                            class="pos-change-amount"
+                        >
+                            0.00 som
+                        </strong>
+                    </div>
+                </div>
+
+                <div
+                    id="checkoutError"
+                    class="pos-checkout-error"
+                    role="alert"
+                    hidden
+                ></div>
+
+                <button
+                    type="button"
+                    id="checkoutButton"
+                    class="pos-checkout-button"
+                    disabled
+                >
+                    <i class="bi bi-check-circle"></i>
+
+                    <span>Savdoni yakunlash</span>
+                </button>
+            </section>
+        </div>
+    </div>
+
+    <div
+        id="posNotice"
+        class="pos-notice"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+    <div
+        id="saleSuccessOverlay"
+        class="pos-success-overlay"
+        aria-hidden="true"
+    >
+        <div
+            class="pos-success-dialog"
+            role="dialog"
+            aria-modal="true"
+        >
+            <div class="pos-success-icon">
+                <i class="bi bi-check-lg"></i>
+            </div>
+
+            <h2>
+                Savdo yakunlandi
+            </h2>
+
+            <p id="successSaleNumber">
+                —
+            </p>
+
+            <div class="pos-success-summary">
+                <div>
+                    <span>Jami</span>
+                    <strong id="successTotal">0 som</strong>
+                </div>
+
+                <div>
+                    <span>Qabul qilindi</span>
+                    <strong id="successReceived">0 som</strong>
+                </div>
+
+                <div class="change">
+                    <span>Qaytim</span>
+                    <strong id="successChange">0 som</strong>
+                </div>
+            </div>
+
+            <button
+                type="button"
+                id="startNextSaleButton"
+                class="btn btn-primary btn-lg w-100"
+            >
+                Keyingi savdo
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/pos.js' %}"></script>
+
+{% endblock %}

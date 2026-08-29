@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path
 
-
 urlpatterns = [
     path(
         "admin/",
@@ -36,5 +35,19 @@ urlpatterns = [
         include(
             "inventory.urls",
         ),
+    ),
+    path(
+        "reports/",
+        include(
+            "reports.urls",
+        )
+    ),
+    path(
+        "",
+        include("accounts.employee_urls"),
+    ),
+    path(
+        "",
+        include("audit.urls"),
     ),
 ]

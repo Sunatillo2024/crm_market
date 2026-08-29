@@ -41,10 +41,7 @@
             class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
         >
             <i class="bi bi-grid-1x2"></i>
-
-            <span>
-                Dashboard
-            </span>
+            <span>Dashboard</span>
         </a>
 
         <a
@@ -52,10 +49,7 @@
             class="sidebar-link {% if request.resolver_match.url_name == 'pos' %}active{% endif %}"
         >
             <i class="bi bi-cart3"></i>
-
-            <span>
-                Savdo / POS
-            </span>
+            <span>Savdo / POS</span>
         </a>
 
         <a
@@ -63,10 +57,7 @@
             class="sidebar-link {% if request.resolver_match.namespace == 'products' %}active{% endif %}"
         >
             <i class="bi bi-box-seam"></i>
-
-            <span>
-                Mahsulotlar
-            </span>
+            <span>Mahsulotlar</span>
         </a>
 
         <a
@@ -74,58 +65,45 @@
             class="sidebar-link {% if request.resolver_match.namespace == 'inventory' %}active{% endif %}"
         >
             <i class="bi bi-boxes"></i>
+            <span>Ombor</span>
+        </a>
 
-            <span>
-                Ombor
-            </span>
+        <a
+            href="{% url 'sales:list' %}"
+            class="sidebar-link {% if request.resolver_match.namespace == 'sales' %}active{% endif %}"
+        >
+            <i class="bi bi-receipt"></i>
+            <span>Savdolar</span>
+        </a>
+
+        <a
+            href="{% url 'reports:index' %}"
+            class="sidebar-link {% if request.resolver_match.namespace == 'reports' %}active{% endif %}"
+        >
+            <i class="bi bi-bar-chart-line"></i>
+            <span>Hisobotlar</span>
+        </a>
+
+        <a
+            href="{% url 'employees:list' %}"
+            class="sidebar-link {% if request.resolver_match.namespace == 'employees' %}active{% endif %}"
+        >
+            <i class="bi bi-people"></i>
+            <span>Xodimlar</span>
+        </a>
+
+        <a
+            href="{% url 'audit:list' %}"
+            class="sidebar-link {% if request.resolver_match.namespace == 'audit' %}active{% endif %}"
+        >
+            <i class="bi bi-clock-history"></i>
+            <span>Faoliyat tarixi</span>
         </a>
 
         <span class="sidebar-link sidebar-link-disabled">
-            <i class="bi bi-receipt"></i>
-
-            <span>
-                Savdolar
-            </span>
-
-            <span class="coming-soon">
-                Tez orada
-            </span>
-        </span>
-
-        <span class="sidebar-link sidebar-link-disabled">
-            <i class="bi bi-bar-chart"></i>
-
-            <span>
-                Hisobotlar
-            </span>
-
-            <span class="coming-soon">
-                Tez orada
-            </span>
-        </span>
-
-        <span class="sidebar-link sidebar-link-disabled">
-            <i class="bi bi-people"></i>
-
-            <span>
-                Xodimlar
-            </span>
-
-            <span class="coming-soon">
-                Tez orada
-            </span>
-        </span>
-
-        <span class="sidebar-link sidebar-link-disabled">
             <i class="bi bi-gear"></i>
-
-            <span>
-                Sozlamalar
-            </span>
-
-            <span class="coming-soon">
-                Tez orada
-            </span>
+            <span>Sozlamalar</span>
+            <span class="coming-soon">Tez orada</span>
         </span>
     </nav>
 
@@ -157,10 +135,7 @@
                 class="sidebar-logout"
             >
                 <i class="bi bi-box-arrow-right"></i>
-
-                <span>
-                    Chiqish
-                </span>
+                <span>Chiqish</span>
             </button>
         </form>
     </div>

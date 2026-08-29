@@ -1,0 +1,419 @@
+{% extends "layouts/owner_base.html" %}
+
+{% block title %}
+    Hisobotlar | {{ current_store.name }}
+{% endblock %}
+
+{% block page_title %}
+    Hisobotlar
+{% endblock %}
+
+{% block page_subtitle %}
+    Tushum, foyda va to‘lovlar statistikasi
+{% endblock %}
+
+{% block header_actions %}
+    <div class="d-flex gap-2">
+        <a
+                href="{% url 'reports:export_csv' %}?period={{ selected_period }}&date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}"
+                class="btn btn-outline-secondary"
+        >
+            <i class="bi bi-filetype-csv me-1"></i>
+            CSV
+        </a>
+
+        <a
+                href="{% url 'reports:export_excel' %}?period={{ selected_period }}&date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}"
+                class="btn btn-success"
+        >
+            <i class="bi bi-file-earmark-excel me-1"></i>
+            Excel
+        </a>
+    </div>
+{% endblock %}
+
+{% block owner_content %}
+
+    <!-- Filter paneli (Tezkor filtrlar va Sana oralig'i) -->
+    <section class="dashboard-panel report-filter-panel">
+        <div class="report-quick-filters mb-3 d-flex gap-2">
+            <a
+                href="?period=today"
+                class="btn btn-sm {% if selected_period == 'today' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+            >
+                Bugun
+            </a>
+
+            <a
+                href="?period=7days"
+                class="btn btn-sm {% if selected_period == '7days' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+            >
+                Oxirgi 7 kun
+            </a>
+
+            <a
+                href="?period=month"
+                class="btn btn-sm {% if selected_period == 'month' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+            >
+                Shu oy
+            </a>
+        </div>
+
+        <form method="get">
+            <input type="hidden" name="period" value="custom">
+
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">
+                        Boshlanish sanasi
+                    </label>
+
+                    <input
+                            type="date"
+                            name="date_from"
+                            value="{{ date_from|date:'Y-m-d' }}"
+                            class="form-control"
+                            required
+                    >
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">
+                        Tugash sanasi
+                    </label>
+
+                    <input
+                            type="date"
+                            name="date_to"
+                            value="{{ date_to|date:'Y-m-d' }}"
+                            class="form-control"
+                            required
+                    >
+                </div>
+
+                <div class="col-md-4 d-flex gap-2">
+                    <button
+                            type="submit"
+                            class="btn btn-dark flex-grow-1"
+                    >
+                        <i class="bi bi-funnel me-1"></i>
+                        Ko‘rsatish
+                    </button>
+
+                    <a
+                            href="{% url 'reports:index' %}"
+                            class="btn btn-outline-secondary"
+                    >
+                        Tozalash
+                    </a>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <!-- Asosiy kartalar -->
+    <div class="sales-summary-grid mt-4">
+        <div class="sales-summary-card primary">
+            <span>Yakunlangan savdolar</span>
+
+            <strong>
+                {{ sales_count }}
+                <small>ta</small>
+            </strong>
+        </div>
+
+        <div class="sales-summary-card success">
+            <span>Jami tushum</span>
+
+            <strong>
+                {{ revenue|floatformat:2 }}
+                <small>som</small>
+            </strong>
+        </div>
+
+        <div class="sales-summary-card">
+            <span>Taxminiy foyda</span>
+
+            <strong>
+                {{ total_profit|floatformat:2 }}
+                <small>som</small>
+            </strong>
+        </div>
+
+        <div class="sales-summary-card danger">
+            <span>Bekor qilingan</span>
+
+            <strong>
+                {{ cancelled_count }}
+                <small>ta</small>
+            </strong>
+        </div>
+    </div>
+
+    <!-- Umumiy ko'rsatkichlar va To'lov turlari -->
+    <div class="report-detail-grid mt-4">
+        <section class="dashboard-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        Umumiy ko‘rsatkichlar
+                    </h2>
+
+                    <p class="panel-subtitle">
+                        Tanlangan sana oralig‘i
+                    </p>
+                </div>
+            </div>
+
+            <div class="sale-info-list">
+                <div>
+                    <span>O‘rtacha chek</span>
+
+                    <strong>
+                        {{ average_check|floatformat:2 }}
+                        som
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Foyda foizi</span>
+
+                    <strong>
+                        {{ profit_margin|floatformat:1 }}%
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Davr</span>
+
+                    <strong>
+                        {{ date_from|date:"d.m.Y" }}
+                        —
+                        {{ date_to|date:"d.m.Y" }}
+                    </strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        To‘lov turlari
+                    </h2>
+
+                    <p class="panel-subtitle">
+                        Naqd va karta bo‘yicha tushum
+                    </p>
+                </div>
+            </div>
+
+            <div class="report-payment-list">
+                <div class="cash">
+                    <span>
+                        <i class="bi bi-cash"></i>
+                        Naqd pul
+                    </span>
+
+                    <strong>
+                        {{ cash_total|floatformat:2 }} som
+                    </strong>
+
+                    <small>
+                        {{ cash_count }} ta savdo
+                    </small>
+                </div>
+
+                <div class="card">
+                    <span>
+                        <i class="bi bi-credit-card"></i>
+                        Karta
+                    </span>
+
+                    <strong>
+                        {{ card_total|floatformat:2 }} som
+                    </strong>
+
+                    <small>
+                        {{ card_count }} ta savdo
+                    </small>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Kunlik tushum grafik -->
+    <section class="dashboard-panel mt-4">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">
+                    Kunlik tushum
+                </h2>
+
+                <p class="panel-subtitle">
+                    Har bir kun bo‘yicha tushum va savdolar soni
+                </p>
+            </div>
+        </div>
+
+        {% if sales_count %}
+            <div class="report-chart-scroll">
+                <div class="daily-sales-chart">
+                    {% for day in daily_report %}
+                        <div
+                                class="daily-chart-column"
+                                title="{{ day.date|date:'d.m.Y' }} — {{ day.revenue|floatformat:2 }} som"
+                        >
+                            <span class="daily-chart-value">
+                                {{ day.revenue|floatformat:0 }}
+                            </span>
+
+                            <div class="daily-chart-track">
+                                <div
+                                        class="daily-chart-bar"
+                                        style="height: {{ day.bar_height }}%;"
+                                ></div>
+                            </div>
+
+                            <strong>
+                                {{ day.date|date:"d.m" }}
+                            </strong>
+
+                            <small>
+                                {{ day.sales_count }} ta
+                            </small>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="report-empty">
+                Tanlangan davrda yakunlangan savdo mavjud emas.
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- Top mahsulotlar va Kassirlar statistikasi jadvali -->
+    <div class="report-statistics-grid mt-4">
+        <section class="dashboard-panel p-0 overflow-hidden">
+            <div class="sale-table-heading p-3">
+                <div>
+                    <h2>Eng ko‘p sotilgan mahsulotlar</h2>
+
+                    <p class="mb-0 text-muted">
+                        Tushum bo‘yicha Top-10
+                    </p>
+                </div>
+            </div>
+
+            {% if top_products %}
+                <div class="table-responsive">
+                    <table class="table product-table align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Mahsulot</th>
+                            <th>Miqdor</th>
+                            <th>Tushum</th>
+                            <th>Foyda</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        {% for product in top_products %}
+                            <tr>
+                                <td>
+                                    {{ forloop.counter }}
+                                </td>
+
+                                <td class="fw-semibold">
+                                    {{ product.product_name }}
+                                </td>
+
+                                <td>
+                                    {{ product.quantity_sold|floatformat:-3 }}
+                                    {{ product.unit_label }}
+                                </td>
+
+                                <td>
+                                    {{ product.revenue|floatformat:2 }}
+                                    som
+                                </td>
+
+                                <td class="text-success">
+                                    {{ product.profit|floatformat:2 }}
+                                    som
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="report-empty p-3 text-center text-muted">
+                    Mahsulot statistikasi mavjud emas.
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="dashboard-panel p-0 overflow-hidden">
+            <div class="sale-table-heading p-3">
+                <div>
+                    <h2>Kassirlar statistikasi</h2>
+
+                    <p class="mb-0 text-muted">
+                        Tushum bo‘yicha reyting
+                    </p>
+                </div>
+            </div>
+
+            {% if cashier_stats %}
+                <div class="table-responsive">
+                    <table class="table product-table align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Kassir</th>
+                            <th>Savdolar</th>
+                            <th>O‘rtacha chek</th>
+                            <th>Tushum</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        {% for cashier in cashier_stats %}
+                            <tr>
+                                <td>
+                                    {{ forloop.counter }}
+                                </td>
+
+                                <td class="fw-semibold">
+                                    {{ cashier.cashier_name }}
+                                </td>
+
+                                <td>
+                                    {{ cashier.sales_count }} ta
+                                </td>
+
+                                <td>
+                                    {{ cashier.average_check|floatformat:2 }}
+                                    som
+                                </td>
+
+                                <td class="fw-semibold">
+                                    {{ cashier.revenue|floatformat:2 }}
+                                    som
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="report-empty p-3 text-center text-muted">
+                    Kassirlar statistikasi mavjud emas.
+                </div>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}
