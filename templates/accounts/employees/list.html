@@ -1,10 +1,147 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "layouts/owner_base.html" %}
 
-</body>
-</html>
+{% block title %}
+    Xodimlar | {{ current_store.name }}
+{% endblock %}
+
+{% block page_title %}
+    Xodimlar
+{% endblock %}
+
+{% block page_subtitle %}
+    Market kassirlarini boshqarish
+{% endblock %}
+
+{% block header_actions %}
+    <a
+        href="{% url 'employees:create' %}"
+        class="btn btn-primary"
+    >
+        <i class="bi bi-person-plus me-1"></i>
+        Kassir qo‘shish
+    </a>
+{% endblock %}
+
+{% block owner_content %}
+
+<div class="dashboard-panel">
+    <div class="panel-header">
+        <div>
+            <h2 class="panel-title">
+                Kassirlar
+            </h2>
+
+            <p class="panel-subtitle">
+                Jami: {{ cashiers|length }} ta
+            </p>
+        </div>
+
+        <span class="panel-icon">
+            <i class="bi bi-people"></i>
+        </span>
+    </div>
+
+    {% if cashiers %}
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Ism</th>
+                        <th>Login</th>
+                        <th>Telefon</th>
+                        <th>Holat</th>
+                        <th class="text-end">
+                            Amallar
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for cashier in cashiers %}
+                        <tr>
+                            <td>
+                                {{ cashier.get_full_name|default:cashier.username }}
+                            </td>
+
+                            <td>
+                                @{{ cashier.username }}
+                            </td>
+
+                            <td>
+                                {{ cashier.phone|default:"—" }}
+                            </td>
+
+                            <td>
+                                {% if cashier.is_active %}
+                                    <span class="status-badge active">
+                                        Faol
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge inactive">
+                                        Bloklangan
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a
+                                        href="{% url 'employees:update' cashier.pk %}"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        title="Tahrirlash"
+                                    >
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    <a
+                                        href="{% url 'employees:password' cashier.pk %}"
+                                        class="btn btn-sm btn-outline-warning"
+                                        title="Parolni yangilash"
+                                    >
+                                        <i class="bi bi-key"></i>
+                                    </a>
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'employees:toggle_status' cashier.pk %}"
+                                    >
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm {% if cashier.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+                                            title="{% if cashier.is_active %}Bloklash{% else %}Faollashtirish{% endif %}"
+                                        >
+                                            <i class="bi {% if cashier.is_active %}bi-lock{% else %}bi-unlock{% endif %}"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-person-plus"></i>
+
+            <h3>
+                Kassirlar yo‘q
+            </h3>
+
+            <p>
+                Hozircha marketga kassir biriktirilmagan.
+            </p>
+
+            <a
+                href="{% url 'employees:create' %}"
+                class="btn btn-primary"
+            >
+                Birinchi kassirni qo‘shish
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

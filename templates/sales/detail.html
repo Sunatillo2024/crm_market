@@ -1,0 +1,181 @@
+{% extends "layouts/owner_base.html" %}
+
+{% block title %}Savdo {{ sale.sale_number }} | {{ current_store.name }}{% endblock %}
+
+{% block page_title %}Savdo {{ sale.sale_number }}{% endblock %}
+
+{% block page_subtitle %}
+    {{ sale.created_at|date:"d.m.Y H:i" }} ·
+    {{ sale.get_payment_method_display }} ·
+    {{ sale.cashier|default:"O‘chirilgan kassir" }}
+{% endblock %}
+
+{% block header_actions %}
+    <a href="{% url 'sales:list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Ortga
+    </a>
+
+    <a href="{% url 'sales:receipt' sale.pk %}" class="btn btn-primary" target="_blank">
+        <i class="bi bi-receipt me-1"></i>
+        Chek
+    </a>
+{% endblock %}
+
+{% block owner_content %}
+<div class="row g-4">
+    <div class="col-xl-8">
+        <section class="dashboard-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Mahsulotlar</h2>
+                    <p class="panel-subtitle">Savdodagi barcha qatorlar</p>
+                </div>
+
+                <span class="panel-icon"><i class="bi bi-box-seam"></i></span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Mahsulot</th>
+                            <th class="text-end">Miqdor</th>
+                            <th class="text-end">Sotuv narxi</th>
+                            <th class="text-end">Jami</th>
+                            <th class="text-end">Foyda</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in sale_items %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{ item.product_name }}</div>
+
+                                    {% if item.barcode %}
+                                        <small class="text-muted">{{ item.barcode }}</small>
+                                    {% endif %}
+
+                                    {% if item.cancelled_at %}
+                                        <div class="small text-danger mt-1">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Bekor qilingan: {{ item.cancelled_at|date:"d.m.Y H:i" }}
+                                            {% if item.cancelled_by %}({{ item.cancelled_by }}){% endif %}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-end">
+                                    {{ item.quantity|floatformat:-3 }} {{ item.get_unit_display }}
+                                </td>
+
+                                <td class="text-end">{{ item.unit_price|floatformat:2 }}</td>
+                                <td class="text-end fw-semibold">{{ item.line_total|floatformat:2 }}</td>
+                                <td class="text-end text-success">{{ item.profit|floatformat:2 }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div class="col-xl-4">
+        <section class="dashboard-panel mb-4">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">To‘lov</h2>
+                    <p class="panel-subtitle">Yakuniy hisob-kitob</p>
+                </div>
+
+                <span class="panel-icon"><i class="bi bi-wallet2"></i></span>
+            </div>
+
+            <div class="payment-summary-item">
+                <span>Holati</span>
+                {% if sale.status == 'cancelled' %}
+                    <strong class="text-danger">{{ sale.get_status_display }}</strong>
+                {% else %}
+                    <strong class="text-success">{{ sale.get_status_display }}</strong>
+                {% endif %}
+            </div>
+
+            <div class="payment-summary-item">
+                <span>To‘lov turi</span>
+                <strong>{{ sale.get_payment_method_display }}</strong>
+            </div>
+
+            <div class="payment-summary-item">
+                <span>Jami</span>
+                <strong>{{ sale.total|floatformat:2 }} som</strong>
+            </div>
+
+            <div class="payment-summary-item">
+                <span>Mijoz bergan</span>
+                <strong>{{ sale.amount_received|floatformat:2 }} som</strong>
+            </div>
+
+            <div class="payment-summary-item">
+                <span>Qaytim</span>
+                <strong>{{ sale.change_amount|floatformat:2 }} som</strong>
+            </div>
+
+            <div class="payment-summary-item">
+                <span>Foyda</span>
+                <strong class="text-success">{{ total_profit|floatformat:2 }} som</strong>
+            </div>
+        </section>
+
+        {% if sale.status == 'completed' %}
+            <section class="dashboard-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Savdoni bekor qilish</h2>
+                        <p class="panel-subtitle">Mahsulotlar omborga qaytariladi</p>
+                    </div>
+
+                    <span class="panel-icon"><i class="bi bi-x-octagon"></i></span>
+                </div>
+
+                <form method="post" action="{% url 'sales:cancel' sale.pk %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ cancel_form.reason.id_for_label }}" class="form-label">
+                            {{ cancel_form.reason.label }}
+                        </label>
+
+                        {{ cancel_form.reason }}
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Savdoni bekor qilish
+                    </button>
+                </form>
+            </section>
+        {% else %}
+            <section class="dashboard-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Bekor qilingan</h2>
+                        <p class="panel-subtitle">Sabab</p>
+                    </div>
+
+                    <span class="panel-icon"><i class="bi bi-clock-history"></i></span>
+                </div>
+
+                {% for item in sale_items %}
+                    {% if item.cancellation_reason %}
+                        <div class="payment-summary-item">
+                            <span>{{ item.product_name }}</span>
+                            <strong>{{ item.cancellation_reason }}</strong>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </section>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -5,7 +5,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from .form import SaleCancelForm
+from audit.models import AuditLog
+from audit.services import record_audit_log
 from inventory.models import StockMovement
 from inventory.services import register_stock_movement
 from products.models import Product
@@ -184,73 +185,126 @@ def complete_sale(*, store, cashier, raw_items, payment_method, amount_received=
 
     return sale
 
-
 @transaction.atomic
 def cancel_sale(*, sale_id, store, actor, reason):
     """
     Savdoni bekor qilish:
-    - statusni CANCELLED ga o‘zgartiradi
-    - cancelled_by, cancelled_at, cancellation_reason maydonlarini to‘ldiradi
-    - har bir mahsulotni omborga qaytaradi (IN movement)
+    - Sale.status ni CANCELLED ga o‘zgartiradi
+    - har bir SaleItem uchun cancelled_by / cancelled_at / cancellation_reason
+      maydonlarini to‘ldiradi
+    - sotilgan mahsulotlarni omborga qaytaradi (SALE_CANCEL harakati)
+    - AuditLog ga "sale_cancelled" yozuvini qo‘shadi
     """
+    if actor is None:
+        raise ValidationError(
+            {"actor": "Savdoni bekor qiluvchi foydalanuvchi aniqlanmadi."}
+        )
+
+    if actor.store_id != store.pk:
+        raise ValidationError(
+            {"actor": "Foydalanuvchi ushbu marketga tegishli emas."}
+        )
+
+    reason = str(reason or "").strip()
+
+    if len(reason) < 3:
+        raise ValidationError(
+            {"reason": "Bekor qilish sababini kiriting."}
+        )
+
+    if len(reason) > 500:
+        raise ValidationError(
+            {"reason": "Bekor qilish sababi 500 belgidan oshmasligi kerak."}
+        )
+
     try:
-        sale = Sale.objects.select_for_update().get(pk=sale_id, store=store)
-    except Sale.DoesNotExist:
-        raise ValidationError("Savdo topilmadi.")
+        sale = (
+            Sale.objects.select_for_update()
+            .get(pk=sale_id, store=store)
+        )
+    except Sale.DoesNotExist as error:
+        raise ValidationError({"sale": "Savdo topilmadi."}) from error
 
     if sale.status == Sale.Status.CANCELLED:
-        raise ValidationError("Bu savdo allaqachon bekor qilingan.")
+        raise ValidationError(
+            {"sale": "Bu savdo oldin bekor qilingan."}
+        )
 
     if sale.status != Sale.Status.COMPLETED:
-        raise ValidationError("Faqat yakunlangan savdolarni bekor qilish mumkin.")
+        raise ValidationError(
+            {"sale": "Faqat yakunlangan savdolarni bekor qilish mumkin."}
+        )
 
-    sale.status = Sale.Status.CANCELLED
-    sale.cancelled_by = actor
-    sale.cancelled_at = timezone.now()
-    sale.cancellation_reason = reason
-    sale.full_clean()
-    sale.save()
+    sale_items = list(
+        SaleItem.objects.filter(sale=sale)
+        .select_related("product")
+        .order_by("product_id", "pk")
+    )
 
-    sale_items = SaleItem.objects.filter(sale=sale).select_related("product")
+    if not sale_items:
+        raise ValidationError(
+            {"sale": "Savdoda mahsulotlar mavjud emas."}
+        )
+
+    product_ids = sorted({item.product_id for item in sale_items})
+
+    locked_products = list(
+        Product.objects.select_for_update()
+        .filter(pk__in=product_ids, store=store)
+        .order_by("pk")
+    )
+
+    if len(locked_products) != len(product_ids):
+        raise ValidationError(
+            {"sale": "Savdodagi mahsulotlardan biri topilmadi."}
+        )
+
+    cancelled_at = timezone.now()
+
     for item in sale_items:
+        item.cancelled_by = actor
+        item.cancelled_at = cancelled_at
+        item.cancellation_reason = reason
+        item.save(
+            update_fields=[
+                "cancelled_by",
+                "cancelled_at",
+                "cancellation_reason",
+            ]
+        )
+
         register_stock_movement(
             store=store,
             product_id=item.product_id,
             actor=actor,
-            movement_type=StockMovement.MovementType.IN,
+            movement_type=StockMovement.MovementType.SALE_CANCEL,
             quantity=item.quantity,
-            note=f"{sale.sale_number} savdosi bekor qilindi: {reason}"
+            note=(
+                f"{sale.sale_number} savdosi bekor qilindi. "
+                f"Sabab: {reason}"
+            ),
+            allow_inactive=True,
         )
-
-    return sale
-
-@transaction.atomic
-def cancel_sale(*, sale_id, store, actor, reason):
-    try:
-        sale = Sale.objects.select_for_update().get(pk=sale_id, store=store)
-    except Sale.DoesNotExist:
-        raise ValidationError("Savdo topilmadi.")
-
-    if sale.status == Sale.Status.CANCELLED:
-        raise ValidationError("Bu savdo allaqachon bekor qilingan.")
-    if sale.status != Sale.Status.COMPLETED:
-        raise ValidationError("Faqat yakunlangan savdolarni bekor qilish mumkin.")
 
     sale.status = Sale.Status.CANCELLED
-    sale.cancelled_by = actor
-    sale.cancelled_at = timezone.now()
-    sale.cancellation_reason = reason
     sale.full_clean()
-    sale.save()
+    sale.save(update_fields=["status"])
 
-    for item in SaleItem.objects.filter(sale=sale).select_related("product"):
-        register_stock_movement(
-            store=store,
-            product_id=item.product_id,
-            actor=actor,
-            movement_type=StockMovement.MovementType.IN,   # yoki ADJUSTMENT
-            quantity=item.quantity,
-            note=f"{sale.sale_number} savdosi bekor qilindi: {reason}",
-        )
+    record_audit_log(
+        store=store,
+        actor=actor,
+        action=AuditLog.Action.SALE_CANCELLED,
+        sale=sale,
+        description=(
+            f"{sale.sale_number} savdosi bekor qilindi. "
+            f"Sabab: {reason}"
+        ),
+        metadata={
+            "sale_number": sale.sale_number,
+            "reason": reason,
+            "total": str(sale.total),
+            "item_count": len(sale_items),
+        },
+    )
 
     return sale

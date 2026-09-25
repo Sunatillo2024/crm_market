@@ -129,7 +129,7 @@ def sale_list(request):
 
     sales = (
         all_sales
-        .select_related("cashier", "cancelled_by")
+        .select_related("cashier")
         .annotate(item_count=Count("items", distinct=True))
     )
 
@@ -190,7 +190,7 @@ def sale_list(request):
 @roles_required(User.Role.OWNER)
 def sale_detail(request, pk):
     sale = get_object_or_404(
-        Sale.objects.select_related("store", "cashier", "cancelled_by").prefetch_related("items__product"),
+        Sale.objects.select_related("store", "cashier").prefetch_related("items__product"),
         pk=pk,
         store=request.user.store,
     )
@@ -211,7 +211,7 @@ def sale_detail(request, pk):
 @roles_required(User.Role.OWNER, User.Role.CASHIER)
 def sale_receipt(request, pk):
     sale = get_object_or_404(
-        Sale.objects.select_related("store", "cashier", "cancelled_by").prefetch_related("items__product"),
+        Sale.objects.select_related("store", "cashier").prefetch_related("items__product"),
         pk=pk,
         store=request.user.store,
     )

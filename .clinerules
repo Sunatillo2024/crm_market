@@ -1,0 +1,50 @@
+# ECO Mini CRM — Cline rules
+
+## Loyiha konteksti
+- Bu Django loyihasi; loyiha ildizi `/Users/macbook/Desktop/ECO_MINI_CRM/crm_market`.
+- Stack: Python 3.11, Django 5.2, PostgreSQL 16, Gunicorn, WhiteNoise, Bootstrap 5 va `openpyxl`.
+- Asosiy app’lar: `accounts`, `stores`, `products`, `inventory`, `sales`, `reports`, `audit`.
+- Barcha ismlar va foydalanuvchi ko‘rinadigan matnlar o‘zbek tilida.
+- Loyiha PostgreSQL mantiqiy qatlamiga bog‘liq: `select_for_update`, qisman unique constraint va transaction testlari SQLite’da tekshirilmasligi mumkin.
+
+## Ish qoidalari
+- Avval `git status`ni tekshirib mavjud foydalanuvchi o‘zgarishlarini saqlash; ularni reset yoki to‘liq qayta yozma.
+- `.env` faylini hech qachon tahrirlama yoki Git’ga qo‘shma. `.env.example` faqat o‘rnbosar qiymatlar bilan ishlatilsin.
+- Django kodida mavjud service/view/form/model tartibini, `gettext`/O‘zbekcha xabarlarni va `transaction.atomic` uslubini davom ettir.
+- Har bir marketga tegishli ma’lumotni `store=request.user.store` yoki service parametri orqali filtrla; foydalanuvchi ID’si orqali market chegarasini tekshir.
+- Role chegaralarini `roles_required(...)` bilan qo‘y; owner va cashier imtiyozlarini aralashtirma.
+- Narx/miqdorlarni `Decimal` bilan hisobla; floating point ishlatma. Miqdor chegaralarini model/form/service darajasida saqlab qol.
+- Savdo yaratish/bekor qilish va ombor harakatlarini atomic transaction ichida bajar; `select_for_update` ishlatilganda nullable FK’larni `select_related` bilan `FOR UPDATE` ga bog‘lamasin.
+- Migration fayllarini qo‘lda tahrirlashdan oldin model o‘zgarishini aniqlash; `makemigrations --check` natijasini tekshir.
+- Yangi xizmat qo‘shilsa, uning model validatsiyasi, role/store izolyatsiyasi va kamida bitta testini yoz.
+
+## Tekshiruv buyruqlari
+- `.venv` faol bo‘lmasa: `cd /Users/macbook/Desktop/ECO_MINI_CRM/crm_market && .venv/bin/python ...`
+- Django tekshiruvi: `.venv/bin/python manage.py check`
+- Migration drift: `.venv/bin/python manage.py makemigrations --check --dry-run`
+- To‘liq testlar: `.venv/bin/python manage.py test --verbosity 1 --noinput`
+- Syntax: `.venv/bin/python -m compileall -q .`
+- Static fayllar: `.venv/bin/python manage.py collectstatic --noinput`
+- Docker konfiguratsiyasi: `docker compose config --quiet`
+- Docker ishga tushirish: `docker compose up -d --build`
+- Holat: `docker compose ps`; loglar: `docker compose logs --tail=100 web db`
+
+## Docker va muhit
+- `.env.example` dan nusxa olib `.env` yarat; `DJANGO_SECRET_KEY`, DB paroli va superuser qiymatlarini o‘zingiz belgilang.
+- `docker-compose.yml` PostgreSQL’ni `db` service sifatida, application’ni `web` service sifatida ishlatadi. Web default port `8001`, DB host porti `5434`.
+- Superuser avtomatik yaratish uchun `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_PASSWORD` va `DJANGO_SUPERUSER_EMAIL` ni berish mumkin; parolni logga yozma.
+- `docker compose down` ma’lumot volume’larini o‘chirmaydi. Faqat kerak bo‘lsa `down -v` ishlatishni oldindan tasdiqla.
+- Production’da `DJANGO_DEBUG=False`, `DJANGO_ALLOWED_HOSTS` aniq ro‘yxati, HTTPS reverse proxy va secure cookie/HSTS sozlamalari kerak.
+
+## Ishlash tartibi
+1. Kontekstni va mavjud testlarni o‘qish.
+2. Kichik, yo‘lga xos tuzatish qilish.
+3. Avval qo‘shimcha yo‘nalish/test, keyin to‘liq test va Django check.
+4. Docker build va migration/entrypoint natijasini tekshirish.
+5. Web login sahifasiga HTTP so‘rov yuborish va `docker compose ps` holatini qayd etish.
+6. Natija, o‘zgarishlar va qolgan production tavsiyalarini qisqa bayon qilish.
+
+## Sifat mezonlari
+- Kodda `TODO`/placeholder qoldirma; zarur bo‘lmagan funksiyani yoki noaniq `pass` ni qoldirma.
+- Test natijasi, xato matni va fayl yo‘lini aniq ko‘rsat.
+- Parol, token, DB paroli yoki boshqa secretni README, `.clinerules`, test natijasi yoki xabar ichida ko‘rsatma.

@@ -40,11 +40,13 @@ urlpatterns = [
         "reports/",
         include(
             "reports.urls",
-        )
+        ),
     ),
     path(
-        "",
-        include("accounts.employee_urls"),
+        "employees/",
+        include(
+            "accounts.employee_urls",
+        ),
     ),
     path(
         "",

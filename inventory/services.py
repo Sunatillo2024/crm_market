@@ -1,9 +1,10 @@
 from decimal import Decimal, InvalidOperation
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.utils import timezone
 from products.models import Product
-from sales.models import Sale
+
+from audit.models import AuditLog
+from audit.services import record_audit_log
 
 from .models import StockMovement
 
@@ -257,162 +258,21 @@ def register_stock_movement(
 
     movement.save()
 
+    record_audit_log(
+        store=store,
+        actor=actor,
+        action=AuditLog.Action.STOCK_MOVEMENT,
+        description=(
+            f"{product.name}: {movement.get_movement_type_display()}, "
+            f"{quantity_before} → {quantity_after}."
+        ),
+        metadata={
+            "product_id": product.pk,
+            "product_name": product.name,
+            "movement_type": movement.movement_type,
+            "quantity_before": str(quantity_before),
+            "quantity_after": str(quantity_after),
+        },
+    )
+
     return movement
-
-
-@transaction.atomic
-def cancel_sale(
-    *,
-    sale_id,
-    store,
-    actor,
-    reason,
-):
-    if actor is None:
-        raise ValidationError(
-            {
-                "actor": (
-                    "Savdoni bekor qiluvchi foydalanuvchi aniqlanmadi."
-                ),
-            }
-        )
-
-    if actor.store_id != store.pk:
-        raise ValidationError(
-            {
-                "actor": (
-                    "Foydalanuvchi ushbu marketga tegishli emas."
-                ),
-            }
-        )
-
-    reason = str(
-        reason or "",
-    ).strip()
-
-    if len(reason) < 3:
-        raise ValidationError(
-            {
-                "reason": (
-                    "Bekor qilish sababini kiriting."
-                ),
-            }
-        )
-
-    if len(reason) > 500:
-        raise ValidationError(
-            {
-                "reason": (
-                    "Bekor qilish sababi 500 belgidan oshmasligi kerak."
-                ),
-            }
-        )
-
-    try:
-        sale = (
-            Sale.objects.select_for_update()
-            .select_related(
-                "store",
-                "cashier",
-            )
-            .get(
-                pk=sale_id,
-                store=store,
-            )
-        )
-    except Sale.DoesNotExist as error:
-        raise ValidationError(
-            {
-                "sale": (
-                    "Savdo topilmadi."
-                ),
-            }
-        ) from error
-
-    if sale.status == Sale.Status.CANCELLED:
-        raise ValidationError(
-            {
-                "sale": (
-                    "Bu savdo oldin bekor qilingan."
-                ),
-            }
-        )
-
-    sale_items = list(
-        sale.items.select_related(
-            "product",
-        ).order_by(
-            "product_id",
-            "pk",
-        )
-    )
-
-    if not sale_items:
-        raise ValidationError(
-            {
-                "sale": (
-                    "Savdoda mahsulotlar mavjud emas."
-                ),
-            }
-        )
-
-    product_ids = sorted(
-        {
-            item.product_id
-            for item in sale_items
-        }
-    )
-
-    locked_products = list(
-        Product.objects.select_for_update()
-        .filter(
-            pk__in=product_ids,
-            store=store,
-        )
-        .order_by(
-            "pk",
-        )
-    )
-
-    if len(locked_products) != len(product_ids):
-        raise ValidationError(
-            {
-                "sale": (
-                    "Savdodagi mahsulotlardan biri topilmadi."
-                ),
-            }
-        )
-
-    for item in sale_items:
-        register_stock_movement(
-            store=store,
-            product_id=item.product_id,
-            actor=actor,
-            movement_type=(
-                StockMovement.MovementType.SALE_CANCEL
-            ),
-            quantity=item.quantity,
-            note=(
-                f"{sale.sale_number} savdosi bekor qilindi. "
-                f"Sabab: {reason}"
-            ),
-            allow_inactive=True,
-        )
-
-    sale.status = Sale.Status.CANCELLED
-    sale.cancelled_by = actor
-    sale.cancelled_at = timezone.now()
-    sale.cancellation_reason = reason
-
-    sale.full_clean()
-
-    sale.save(
-        update_fields=[
-            "status",
-            "cancelled_by",
-            "cancelled_at",
-            "cancellation_reason",
-        ]
-    )
-
-    return sale

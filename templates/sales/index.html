@@ -1,10 +1,163 @@
-<!DOCTYPE html>
-<html lang="uz">
-<head>
-    <meta charset="UTF-8">
-    <title>Sales Саҳифаси</title>
-</head>
-<body>
-    <h1>Сотувлар саҳифаси муваффақиятли очилди!</h1>
-</body>
-</html>
+{% extends "layouts/owner_base.html" %}
+
+{% block title %}Savdolar | {{ current_store.name }}{% endblock %}
+
+{% block page_title %}Savdolar{% endblock %}
+
+{% block page_subtitle %}Yakunlangan va bekor qilingan savdolar ro‘yxati{% endblock %}
+
+{% block header_actions %}
+    <a href="{% url 'sales:pos' %}" class="btn btn-primary">
+        <i class="bi bi-cart3 me-1"></i>
+        Savdo / POS
+    </a>
+{% endblock %}
+
+{% block owner_content %}
+<div class="product-summary-grid">
+    <div class="product-summary-card">
+        <span>Bugungi savdolar</span>
+        <strong>{{ today_sales_count }}</strong>
+    </div>
+
+    <div class="product-summary-card">
+        <span>Bugungi tushum</span>
+        <strong>{{ today_total|floatformat:2 }}</strong>
+    </div>
+
+    <div class="product-summary-card secondary">
+        <span>Yakunlangan</span>
+        <strong>{{ completed_count }}</strong>
+    </div>
+
+    <div class="product-summary-card warning">
+        <span>Bekor qilingan</span>
+        <strong>{{ cancelled_count }}</strong>
+    </div>
+</div>
+
+<section class="dashboard-panel report-filter-panel mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Qidiruv</label>
+            <input type="text" name="search" class="form-control"
+                   placeholder="Savdo raqami, mahsulot yoki barkod"
+                   value="{{ search }}">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Holati</label>
+            <select name="status" class="form-select">
+                <option value="all" {% if selected_status == 'all' %}selected{% endif %}>Barchasi</option>
+                <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Yakunlangan</option>
+                <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Bekor qilingan</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">To‘lov</label>
+            <select name="payment" class="form-select">
+                <option value="all" {% if selected_payment == 'all' %}selected{% endif %}>Barchasi</option>
+                <option value="cash" {% if selected_payment == 'cash' %}selected{% endif %}>Naqd pul</option>
+                <option value="card" {% if selected_payment == 'card' %}selected{% endif %}>Karta</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Dan</label>
+            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Gacha</label>
+            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+        </div>
+
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </form>
+</section>
+
+<section class="dashboard-panel">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Savdo raqami</th>
+                    <th>Vaqt</th>
+                    <th>Kassir</th>
+                    <th class="text-center">Qatorlar</th>
+                    <th>To‘lov</th>
+                    <th class="text-end">Summa</th>
+                    <th>Holati</th>
+                    <th class="text-end">Amallar</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for sale in page_obj %}
+                    <tr>
+                        <td class="fw-semibold">{{ sale.sale_number }}</td>
+                        <td class="text-nowrap">{{ sale.created_at|date:"d.m.Y H:i" }}</td>
+                        <td>{{ sale.cashier|default:"—" }}</td>
+                        <td class="text-center">{{ sale.item_count }}</td>
+                        <td>{{ sale.get_payment_method_display }}</td>
+                        <td class="text-end fw-semibold">{{ sale.total|floatformat:2 }}</td>
+                        <td>
+                            {% if sale.status == 'cancelled' %}
+                                <span class="badge bg-danger">{{ sale.get_status_display }}</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ sale.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'sales:detail' sale.pk %}"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <a href="{% url 'sales:receipt' sale.pk %}"
+                               class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="bi bi-receipt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            Savdolar topilmadi.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+        <div class="d-flex justify-content-center mt-4">
+            <nav>
+                <ul class="pagination mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ page_query }}">Orqaga</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ page_query }}">Keyingi</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

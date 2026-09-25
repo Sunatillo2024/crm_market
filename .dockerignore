@@ -1,0 +1,36 @@
+# Version control / IDE
+.git
+.gitignore
+.vscode
+.idea
+*.code-workspace
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Secrets & local env (runtime values come from docker-compose env_file)
+.env
+.env.*
+!.env.example
+
+# Local database & generated assets (mounted as volumes in docker-compose)
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Logs / OS junk
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db

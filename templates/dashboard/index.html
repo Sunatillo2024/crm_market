@@ -97,7 +97,7 @@
                                     </td>
 
                                     <td class="text-end fw-semibold">
-                                        {{ sale.total_amount }} som
+                                        {{ sale.total }} som
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -162,11 +162,11 @@
                     <span class="payment-method">
                         <i class="bi bi-phone text-primary"></i>
 
-                        O‘tkazma
+                        Karta
                     </span>
 
                     <strong>
-                        {{ payment_summary.transfer|floatformat:0 }} som
+                        {{ payment_summary.card|floatformat:0 }} som
                     </strong>
                 </div>
             </div>

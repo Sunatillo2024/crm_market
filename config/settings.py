@@ -29,14 +29,8 @@ DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() in {
     "on",
 }
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv(
-        "DJANGO_ALLOWED_HOSTS",
-        "127.0.0.1,localhost",
-    ).split(",")
-    if host.strip()
-]
+# Jprq, ngrok va boshqa domenlar uchun barchasiga ruxsat
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     # Django apps
@@ -55,11 +49,12 @@ INSTALLED_APPS = [
     "sales",
     "reports",
     "audit",
-
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Serves static files when the app runs behind gunicorn (no separate web server)
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -132,6 +127,12 @@ LANGUAGE_CODE = "uz"
 
 TIME_ZONE = "Asia/Bishkek"
 
+# Jprq orqali keladigan POST/CSRF so'rovlarga ishonchli manzil sifatida ruxsat berish
+CSRF_TRUSTED_ORIGINS = [
+    "https://mini.jprq.live",
+    "http://mini.jprq.live",
+]
+
 USE_I18N = True
 
 USE_TZ = True
@@ -143,6 +144,15 @@ STATICFILES_DIRS = [
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
